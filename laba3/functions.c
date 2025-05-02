@@ -19,30 +19,54 @@ int correct_choice() {
     return task;
 }
 
-// Ввод фамилии (только буквы)
 void inputSurname(char **surname) {
     char buffer[100];
     int valid = 0;
 
     while (!valid) {
         printf("Введите фамилию клиента (только буквы): ");
-        fgets(buffer, sizeof(buffer), stdin);
-        buffer[strcspn(buffer, "\n")] = '\0';
+        if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+            clearerr(stdin); // Сброс ошибок ввода
+            continue;
+        }
 
+        // Удаление '\n' и проверка на переполнение буфера
+        char *newline = strchr(buffer, '\n');
+        if (newline != NULL) {
+            *newline = '\0';
+        } else {
+            // Очистка буфера, если введено больше 99 символов
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF);
+        }
+
+        // Проверка на пустую строку
+        size_t len = strlen(buffer);
+        if (len == 0) {
+            printf("Фамилия не может быть пустой.\n");
+            valid = 0;
+            continue;
+        }
+
+        // Проверка символов
         valid = 1;
-        for (size_t i = 0; i < strlen(buffer); i++) {
-            if (!isalpha(buffer[i])) {
-                printf("Некорректный ввод. Фамилия должна состоять только из букв.\n");
+        for (size_t i = 0; i < len; i++) {
+            if (!isalpha((unsigned char)buffer[i])) {
+                printf("Некорректный символ: '%c'\n", buffer[i]);
                 valid = 0;
                 break;
             }
         }
     }
 
-    *surname = (char *)malloc(strlen(buffer) + 1);
+    // Выделение памяти
+    *surname = malloc(strlen(buffer) + 1);
+    if (*surname == NULL) {
+        perror("Ошибка выделения памяти");
+        exit(EXIT_FAILURE);
+    }
     strcpy(*surname, buffer);
 }
-
 // Ввод суммы вклада
 double inputDeposit() {
     char buffer[100];
@@ -83,7 +107,7 @@ void inputClient(Client *client) {
     printf("Введите номер паспорта: ");
     client->passportNumber = correct_choice();
 
-    while (getchar() != '\n'); // Очистка
+   
     inputSurname(&client->surname);
 
     printf("Введите номер счёта: ");
@@ -192,4 +216,5 @@ void menuTask2() {
     }
     free(clients);
 }
+
 
